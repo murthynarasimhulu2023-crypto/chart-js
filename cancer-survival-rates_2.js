@@ -1,0 +1,95 @@
+chart = {
+
+
+  // Specify the chart’s dimensions.
+  const width = 928;
+  const height = 600;
+  const marginTop = 40;
+  const marginRight = 50;
+  const marginBottom = 10;
+  const marginLeft = 50;
+  const padding = 3;
+
+
+  // Prepare the positional scales.
+  const steps = [...new Set(data.map(d => d.year))];
+  
+  const x = d3.scalePoint()
+    .domain(steps)
+    .range([marginLeft, width - marginRight])
+    .padding(0.5);
+
+
+  const y = d3.scaleLinear()
+    .domain(d3.extent(data.map(d => d.survival)))
+    .range([height - marginBottom, marginTop]);
+
+
+  const line = d3.line()
+    .x(d => x(d.year))
+    .y(d => y(d.survival));
+
+
+  const formatNumber = y.tickFormat(100);
+
+
+  // Create the SVG container.
+  const svg = d3.create("svg")
+      .attr("viewBox", [0, 0, width, height])
+      .attr("style", "max-width: 100%; height: auto; font: 10px sans-serif;");
+
+
+  // Create the x axis.
+  svg.append("g")
+      .attr("text-anchor", "middle")
+    .selectAll("g")
+    .data(steps)
+    .join("g")
+      .attr("transform", (d) => `translate(${x(d)},20)`)
+      .call(g => g.append("text").text((d) => d))
+      .call(g => g.append("line").attr("y1", 3).attr("y2", 9).attr("stroke", "currentColor"));
+
+
+  // Create a line for each name.
+  svg.append("g")
+      .attr("fill", "none")
+      .attr("stroke", "currentColor")
+    .selectAll("path")
+    .data(d3.group(data, d => d.name))
+    .join("path")
+      .attr("d", ([, values]) => line(values));
+
+
+  // Create a group of labels for each year.
+  svg.append("g")
+    .selectAll("g")
+    .data(d3.group(data, d => d.year))
+    .join("g")
+      .attr("transform", ([step]) => `translate(${x(step) + (
+          step === "20 Year" ? padding
+        : step === "5 Year" ? -padding
+        : 0
+      )},0)`)
+      .attr("text-anchor", ([step]) =>
+          step === "5 Year" ? "end"
+          : step === "20 Year" ? "start"
+          : "middle")
+    .selectAll("text")
+    .data(([step, values]) => d3.zip(
+      values.map(
+          step === "20 Year" ? (d) => `${formatNumber(d.survival)} ${d.name}`
+        : step === "5 Year" ? (d) => `${d.name} ${formatNumber(d.survival)}`
+        : (d) => `${formatNumber(d.survival)}`),
+      dodge(values.map(d => y(d.survival)))))
+    .join("text")
+      .attr("y", ([, y]) => y)
+      .attr("dy", "0.35em")
+      .text(([text]) => text)
+      .attr("fill", "currentColor")
+      .attr("stroke", "white")
+      .attr("stroke-width", 5)
+      .attr("paint-order", "stroke");
+
+
+  return svg.node();
+}

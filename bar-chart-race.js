@@ -1,0 +1,1 @@
+data = FileAttachment("category-brands.csv").csv({typed: true})

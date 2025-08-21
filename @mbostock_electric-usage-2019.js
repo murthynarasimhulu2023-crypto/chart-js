@@ -1,0 +1,1 @@
+data = d3.csvParse(await FileAttachment("pge-electric-data.csv").text(), parseData)
