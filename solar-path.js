@@ -1,0 +1,1 @@
+update = chart.update(date)

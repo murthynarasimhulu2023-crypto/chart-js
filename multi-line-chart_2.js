@@ -1,0 +1,1 @@
+focus = Generators.input(chart) // or say viewof focus = chart…

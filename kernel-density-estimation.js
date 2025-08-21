@@ -1,0 +1,1 @@
+thresholds = d3.ticks(...d3.nice(...d3.extent(data), 10), 40)
