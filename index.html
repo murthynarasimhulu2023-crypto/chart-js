@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3 Comprehensive Playground</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-geo-projection@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-hexbin@0.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-cloud@1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-statistics@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/versor@0.2"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f8fafc;
+            color: #1e293b;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .playground {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: calc(100vh - 70px);
+        }
+        
+        .editor-panel {
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            color: #475569;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .code-editor {
+            flex: 1;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            border: none;
+            outline: none;
+            resize: none;
+            background: #fafafa;
+            line-height: 1.6;
+            tab-size: 2;
+        }
+        
+        .controls {
+            padding: 15px 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .output-panel {
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .output-content {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+            position: relative;
+        }
+        
+        .error {
+            color: #dc2626;
+            background: #fef2f2;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-family: monospace;
+            font-size: 13px;
+            border-left: 4px solid #dc2626;
+        }
+        
+        .success {
+            color: #059669;
+            background: #ecfdf5;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            border-left: 4px solid #10b981;
+        }
+        
+        svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        canvas {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .examples-dropdown {
+            position: relative;
+        }
+        
+        .examples-select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            font-size: 14px;
+            min-width: 200px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        @media (max-width: 1024px) {
+            .playground {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr;
+            }
+            
+            .editor-panel {
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>D3 Comprehensive Playground</h1>
+        <div class="header-controls">
+            <div class="examples-dropdown">
+                <select class="examples-select" id="exampleSelect">
+                    <option value="">Select an example...</option>
+                </select>
+            </div>
+            <div class="status" id="status">Ready</div>
+        </div>
+    </div>
+    
+    <div class="playground">
+        <div class="editor-panel">
+            <div class="panel-header">
+                <span>JavaScript Code</span>
+                <span id="loadingIndicator" class="loading" style="display: none;"></span>
+            </div>
+            <textarea class="code-editor" id="codeEditor" placeholder="// Enter your D3.js code here
+// Example:
+const svg = d3.select('#output')
+  .append('svg')
+  .attr('width', 400)
+  .attr('height', 300);
+
+svg.append('circle')
+  .attr('cx', 200)
+  .attr('cy', 150)
+  .attr('r', 50)
+  .attr('fill', 'steelblue');"></textarea>
+            <div class="controls">
+                <button class="btn btn-primary" id="runBtn">Run Code</button>
+                <button class="btn btn-secondary" id="clearBtn">Clear</button>
+                <button class="btn btn-success" id="autoRunBtn">Auto Run</button>
+            </div>
+        </div>
+        
+        <div class="output-panel">
+            <div class="panel-header">Output</div>
+            <div class="output-content" id="output"></div>
+        </div>
+    </div>
+
+    <script src="playground.js"></script>
+</body>
+</html>
